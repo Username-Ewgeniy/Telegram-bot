@@ -18,21 +18,26 @@ class Convertor:
         try:
             sym_key = exchanges[sym.lower()]
         except KeyError:
-            raise APIException(f"Валюта {sym} не найдена!")
+            raise APIException(f"Валюта {sym_key} не найдена!")
 
         if base_key == sym_key:
-            raise APIException(f'Невозможно перевести одинаковые валюты {base}!')
+            raise APIException(f'Невозможно перевести одинаковые валюты {base_key}!')
 
         try:
-            amount = float(amount)
+            amount = float(amount.replace(",","."))
         except ValueError:
             raise APIException(f'Не удалось обработать количество {amount}!')
 
-        # r = requests.get(f"https://api.exchangeratesapi.io/latest?base={base_key}&symbols={sym_key}")
-        r = requests.get(f"http://api.exchangeratesapi.io/v1/latest?access_key=ef49c5c68819758000103cb9d2303952?base={base_key}&symbols={sym_key}")
+        r = requests.request(\
+            "GET", \
+            f"https://api.apilayer.com/exchangerates_data/latest?symbols={sym_key}&base={base_key}", \
+            headers={"apikey": "KEmO6Lntvzp0XSmVnoEGBlN010BgXPfM"}, \
+            data={})
+        resp_0 = json.loads(r.content)
+        resp_1 = resp_0['rates']
+        resp_2 = list(resp_1.values())
+        resp = resp_2[0]
+        new_price = round(float(resp) * float(amount), 2)
 
-        resp = json.loads(r.content)
-        new_price = resp['rates'][sym_key] * amount
-        new_price = round(new_price, 3)
         message = f"Цена {amount} {base} в {sym} : {new_price}"
         return message
